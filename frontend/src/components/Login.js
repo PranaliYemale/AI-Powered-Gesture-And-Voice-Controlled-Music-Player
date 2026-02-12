@@ -6,36 +6,41 @@ function Login() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  const API = process.env.REACT_APP_API_URL;
+
   const handleLogin = async () => {
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email_or_username, password }),
-    });
+    try {
+      const res = await fetch(`${API}/api/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email_or_username, password }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      alert(data.error);
-      return;
+      if (!res.ok) {
+        alert(data.error || "Login failed");
+        return;
+      }
+
+      localStorage.setItem("user_id", data.user_id);
+
+      // start voice (production safe)
+      await fetch(`${API}/api/voice/start`, {
+        method: "POST",
+      });
+
+      navigate("/dashboard");
+
+    } catch (err) {
+      console.error("Login error:", err);
+      alert("Backend server not reachable");
     }
-
-    localStorage.setItem("user_id", data.user_id);
-
-    // voice start
-    fetch("http://127.0.0.1:5000/api/voice/start", {
-      method: "POST",
-    });
-
-    navigate("/dashboard");
   };
 
   return (
     <div className="auth-page">
-
-      {/* 👇 MAIN BOX ADDED */}
       <div className="auth-box">
-
         <h2>Login</h2>
 
         <input
@@ -52,9 +57,9 @@ function Login() {
         />
 
         <p>
-          New user?{" "} 
+          New user?{" "}
           <span
-            style={{color:"#6c63ff", cursor:"pointer"}}
+            style={{ color: "#6c63ff", cursor: "pointer" }}
             onClick={() => navigate("/signup")}
           >
             Sign Up here
@@ -62,9 +67,7 @@ function Login() {
         </p>
 
         <button onClick={handleLogin}>Login</button>
-
       </div>
-
     </div>
   );
 }
