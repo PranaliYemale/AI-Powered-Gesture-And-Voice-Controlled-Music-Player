@@ -5,49 +5,60 @@ import VoiceHelp from "./VoiceHelp";
 import GestureControl from "./GestureControl";
 
 function Dashboard() {
+  const API = process.env.REACT_APP_API_URL;
+
   const [mode, setMode] = useState("local");
   const [status, setStatus] = useState("Stopped");
   const [songs, setSongs] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [backendState, setBackendState] = useState(null);
   const navigate = useNavigate();
 
+  // 🔹 Fetch local songs
   useEffect(() => {
     if (mode === "local") {
-      fetch("/api/songs")
+      fetch(`${API}/api/songs`)
         .then((res) => res.json())
-        .then((data) => setSongs(data.songs || []));
+        .then((data) => setSongs(data.songs || []))
+        .catch((err) => console.error("Songs fetch error:", err));
     }
-  }, [mode]);
+  }, [mode, API]);
 
+  // 🔹 Poll backend state every 2 sec
   useEffect(() => {
     const interval = setInterval(() => {
-      fetch("/api/state")
-        .then(res => res.json())
-        .then(data => {
-          setBackendState(data);
-          setCurrentIndex(data.current_index);
-          setStatus(data.status);
-          setMode(data.mode);
+      fetch(`${API}/api/state`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data) {
+            setCurrentIndex(data.current_index ?? 0);
+            setStatus(data.status ?? "Stopped");
+            setMode(data.mode ?? "local");
+          }
         })
         .catch(() => {});
-    }, 1000);
+    }, 2000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [API]);
 
+  // 🔹 Play selected song
   const playSelectedSong = (index) => {
-    fetch("/api/play_index", {
+    fetch(`${API}/api/play_index`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ index })
-    });
+      body: JSON.stringify({ index }),
+    }).catch((err) => console.error("Play error:", err));
   };
 
-  const btn = (name, api, red=false) => (
+  // 🔹 Button helper
+  const btn = (name, api, red = false) => (
     <button
-      className={`btn ${red ? "btn-red":""}`}
-      onClick={() => fetch(api, {method:"POST"})}
+      className={`btn ${red ? "btn-red" : ""}`}
+      onClick={() =>
+        fetch(`${API}${api}`, { method: "POST" }).catch((err) =>
+          console.error("Button error:", err)
+        )
+      }
     >
       {name}
     </button>
@@ -59,9 +70,8 @@ function Dashboard() {
   };
 
   return (
-    <div style={{padding:20, position:"relative"}}>
-
-      <div style={{position: "absolute", top: 20, right: 20}}>
+    <div style={{ padding: 20, position: "relative" }}>
+      <div style={{ position: "absolute", top: 20, right: 20 }}>
         <button className="btn btn-red" onClick={handleLogout}>
           Logout
         </button>
@@ -69,21 +79,20 @@ function Dashboard() {
 
       <h1>🎧 Smart Music Player</h1>
 
-      <VoiceStatus/>
+      <VoiceStatus />
 
       <div className="glass">
-
         <div>
           <b>Mode:</b> {mode.toUpperCase()}
           <div>
-            <button className="btn" onClick={()=>setMode("local")}>
+            <button className="btn" onClick={() => setMode("local")}>
               Local
             </button>
 
             <button
               className="btn"
               onClick={() =>
-                window.location.href="https://your-backend-url/api/spotify/login"
+                (window.location.href = `${API}/api/spotify/login`)
               }
             >
               Spotify
@@ -91,27 +100,25 @@ function Dashboard() {
           </div>
         </div>
 
-        <div style={{marginTop:10}}>
+        <div style={{ marginTop: 10 }}>
           <b>Status:</b> {status}
         </div>
 
-        <div style={{marginTop:15}}>
-          {btn("▶ Play","/api/play")}
-          {btn("⏸ Pause","/api/pause")}
-          {btn("⏭ Next","/api/next")}
-          {btn("⏮ Prev","/api/prev")}
-          {btn("🔊 Vol+","/api/volume_up")}
-          {btn("🔉 Vol-","/api/volume_down")}
-          {btn("👍 Like","/api/like")}
-          {btn("👎 Dislike","/api/dislike")}
+        <div style={{ marginTop: 15 }}>
+          {btn("▶ Play", "/api/play")}
+          {btn("⏸ Pause", "/api/pause")}
+          {btn("⏭ Next", "/api/next")}
+          {btn("⏮ Prev", "/api/prev")}
+          {btn("🔊 Vol+", "/api/volume_up")}
+          {btn("🔉 Vol-", "/api/volume_down")}
+          {btn("👍 Like", "/api/like")}
+          {btn("👎 Dislike", "/api/dislike")}
         </div>
 
-        {/* 👇 GESTURE CAMERA HERE */}
         <div style={{ marginTop: 25 }}>
           <h3>🖐 Gesture Control</h3>
           <GestureControl />
         </div>
-
       </div>
 
       {mode === "local" && (
@@ -126,7 +133,7 @@ function Dashboard() {
               borderRadius: "10px",
               background: "#111",
               color: "white",
-              border: "1px solid #444"
+              border: "1px solid #444",
             }}
           >
             {songs.map((s, i) => (
@@ -138,7 +145,7 @@ function Dashboard() {
         </div>
       )}
 
-      <VoiceHelp/>
+      <VoiceHelp />
     </div>
   );
 }
