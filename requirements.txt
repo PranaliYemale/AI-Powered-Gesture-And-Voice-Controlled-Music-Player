@@ -15,7 +15,7 @@ sounddevice==0.5.5
 opencv-python==4.13.0.92
 opencv-contrib-python==4.13.0.92
 mediapipe==0.10.32
-pygame==2.6.1; sys_platform == "win32" or sys_platform == "darwin"
+
 
 # ---------------- DEPENDENCIES ----------------
 numpy==2.4.2
