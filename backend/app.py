@@ -6,22 +6,36 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
 # ---------------- DATABASE ----------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "database.db")
+
 
 app = Flask(__name__)
+database_url = os.getenv("DATABASE_URL")
+
+if not database_url:
+    raise ValueError("DATABASE_URL not set")
+
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 
 db.init_app(app)
 
-with app.app_context():
+@app.before_first_request
+def create_tables():
     db.create_all()
 
+@app.route("/")
+def home():
+    return "Backend is running 🚀"
+
 # ---------------- MUSIC FOLDER ----------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MUSIC_FOLDER = os.path.join(BASE_DIR, "music")
 os.makedirs(MUSIC_FOLDER, exist_ok=True)
 
@@ -37,7 +51,7 @@ class DummyPlayer:
         self.current_index = 0
         self.volume = 50
         self.status = "stopped"
-
+    
     def play(self):
         self.status = "playing"
 
@@ -65,6 +79,8 @@ voice_status = {"active": False}
 gesture_status = {"active": False}
 
 # ---------------- PLAYER CONTROLS ----------------
+
+
 @app.route("/api/play", methods=["POST"])
 def play():
     player.play()
@@ -150,11 +166,7 @@ def login():
     if not check_password_hash(user.password, data["password"]):
         return jsonify({"error": "Invalid credentials"}), 401
 
-    return jsonify({
-        "message": "Login successful",
-        "user_id": user.id
-    })
-
+    return jsonify({"message": "Login successful", "user_id": user.id})
 # ---------------- VOICE ----------------
 @app.route("/api/voice/start", methods=["POST"])
 def voice_start():
@@ -191,3 +203,4 @@ def gesture_status_route():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+    

@@ -3,7 +3,7 @@ import threading
 import requests
 import speech_recognition as sr
 
-API_BASE = "http://127.0.0.1:5000/api"
+API_BASE = "https://ai-powered-gesture-and-voice-controlled-rdl7.onrender.com/api"
 
 listening = False
 voice_enabled = False   # 🔥 NEW FLAG

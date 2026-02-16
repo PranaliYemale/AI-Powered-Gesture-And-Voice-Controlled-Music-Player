@@ -28,3 +28,4 @@ cffi==2.0.0
 greenlet==3.3.1
 blinker==1.9.0
 gunicorn
+psycopg2-binary
