@@ -20,15 +20,13 @@ if database_url.startswith("postgres://"):
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-CORS(app, resources={r"/api/*": {"origins": "*"}})
-
-
-
 db.init_app(app)
 
-@app.before_first_request
-def create_tables():
+with app.app_context():
     db.create_all()
+
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+
 
 @app.route("/")
 def home():
