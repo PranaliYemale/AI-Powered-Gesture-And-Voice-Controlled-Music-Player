@@ -25,7 +25,7 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app)
 
 
 @app.route("/")
@@ -121,10 +121,32 @@ def get_state():
     })
 
 # ---------------- SONG LIST ----------------
-
 @app.route("/music/<filename>")
 def serve_music(filename):
     return send_from_directory(MUSIC_FOLDER, filename)
+@app.route("/api/songs")
+def get_songs():
+    songs = [
+        f for f in os.listdir(MUSIC_FOLDER)
+        if f.endswith(".mp3") or f.endswith(".wav")
+    ]
+    return jsonify({"songs": songs})
+
+@app.route("/api/play_index", methods=["POST"])
+def play_index():
+    data = request.get_json()
+    index = data.get("index", 0)
+
+    if index < 0 or index >= len(player.songs):
+        return jsonify({"error": "Invalid index"}), 400
+
+    player.current_index = index
+    player.play()
+
+    return jsonify({
+        "status": player.status,
+        "current_index": player.current_index
+    })
 # ---------------- AUTH ----------------
 @app.route("/api/signup", methods=["POST"])
 @app.route("/api/signup", methods=["POST"])
