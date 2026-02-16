@@ -127,8 +127,10 @@ def get_songs():
 
 # ---------------- AUTH ----------------
 @app.route("/api/signup", methods=["POST"])
+@app.route("/api/signup", methods=["POST"])
 def signup():
     data = request.get_json()
+    print("Signup request data:", data)  # debug
 
     if User.query.filter(
         (User.email == data["email"]) |
@@ -137,15 +139,14 @@ def signup():
         return jsonify({"error": "User already exists"}), 400
 
     hashed_password = generate_password_hash(data["password"])
-
     user = User(
         username=data["username"],
         email=data["email"],
         password=hashed_password
     )
-
     db.session.add(user)
     db.session.commit()
+    print("User created:", user.id)  # debug
 
     return jsonify({"message": "Signup successful"}), 201
 
