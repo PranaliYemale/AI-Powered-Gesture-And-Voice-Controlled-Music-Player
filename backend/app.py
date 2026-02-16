@@ -124,12 +124,15 @@ def get_state():
 @app.route("/music/<filename>")
 def serve_music(filename):
     return send_from_directory(MUSIC_FOLDER, filename)
+
 @app.route("/api/songs")
 def get_songs():
-    songs = [
-        f for f in os.listdir(MUSIC_FOLDER)
-        if f.endswith(".mp3") or f.endswith(".wav")
-    ]
+    songs = []
+    if os.path.exists(MUSIC_FOLDER):
+        songs = [
+            f for f in os.listdir(MUSIC_FOLDER)
+            if f.endswith(".mp3") or f.endswith(".wav")
+        ]
     return jsonify({"songs": songs})
 
 @app.route("/api/play_index", methods=["POST"])
