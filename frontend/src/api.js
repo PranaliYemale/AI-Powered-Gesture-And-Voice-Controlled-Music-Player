@@ -1,7 +1,8 @@
 import axios from "axios";
 
+// Use your Render backend URL here
 const API = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: "https://ai-powered-gesture-and-voice-controlled-ob5a.onrender.com/api",
 });
 
 API.interceptors.request.use((req) => {
@@ -13,4 +14,3 @@ API.interceptors.request.use((req) => {
 });
 
 export default API;
-
