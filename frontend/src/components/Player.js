@@ -6,25 +6,25 @@ function Player({ songs }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const audioRef = useRef(null);
 
-  // Play / Pause functions
   const play = () => audioRef.current?.play();
   const pause = () => audioRef.current?.pause();
 
   const next = () => {
+    if (songs.length === 0) return;
     setCurrentIndex((prev) => (prev + 1) % songs.length);
   };
 
   const prev = () => {
+    if (songs.length === 0) return;
     setCurrentIndex((prev) => (prev - 1 + songs.length) % songs.length);
   };
 
-  // Auto-play when currentIndex changes
   useEffect(() => {
-    if (audioRef.current) {
+    if (audioRef.current && songs.length > 0) {
       audioRef.current.load();
-      audioRef.current.play().catch(() => {}); // in case auto-play blocked
+      audioRef.current.play().catch(() => {});
     }
-  }, [currentIndex]);
+  }, [currentIndex, songs]);
 
   return (
     <div className="player">
@@ -36,7 +36,7 @@ function Player({ songs }) {
             ref={audioRef}
             src={`${API}/music/${songs[currentIndex]}`}
             controls
-        />
+          />
 
           <div className="controls">
             <button onClick={prev}>Prev</button>
