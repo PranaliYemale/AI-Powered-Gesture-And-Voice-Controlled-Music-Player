@@ -3,8 +3,8 @@ from flask_cors import CORS
 from backend.models import db, User
 from backend.voice_control import start_voice, stop_voice
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask import send_from_directory
 import os
-
 # ---------------- DATABASE ----------------
 
 
@@ -125,6 +125,9 @@ def get_state():
 def get_songs():
     return jsonify({"songs": local_songs})
 
+@app.route("/music/<filename>")
+def serve_music(filename):
+    return send_from_directory(MUSIC_FOLDER, filename)
 # ---------------- AUTH ----------------
 @app.route("/api/signup", methods=["POST"])
 @app.route("/api/signup", methods=["POST"])
