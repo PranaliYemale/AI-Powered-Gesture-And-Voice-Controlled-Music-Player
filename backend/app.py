@@ -121,9 +121,6 @@ def get_state():
     })
 
 # ---------------- SONG LIST ----------------
-@app.route("/api/songs", methods=["GET"])
-def get_songs():
-    return jsonify({"songs": local_songs})
 
 @app.route("/music/<filename>")
 def serve_music(filename):
