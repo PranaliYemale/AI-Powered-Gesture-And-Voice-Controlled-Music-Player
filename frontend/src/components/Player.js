@@ -32,10 +32,11 @@ function Player({ songs }) {
         <>
           <h2>{songs[currentIndex]}</h2>
 
-          <audio ref={audioRef} controls>
-            <source src={`${API}/music/${songs[currentIndex]}`} type="audio/mpeg" />
-            Your browser does not support the audio element.
-          </audio>
+          <audio
+            ref={audioRef}
+            src={`${API}/music/${songs[currentIndex]}`}
+            controls
+        />
 
           <div className="controls">
             <button onClick={prev}>Prev</button>
