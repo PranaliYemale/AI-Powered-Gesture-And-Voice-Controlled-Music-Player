@@ -4,11 +4,13 @@ import { useNavigate } from "react-router-dom";
 function Login() {
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
+  const navigate = useNavigate();
   const API = process.env.REACT_APP_API_URL;
 
   const handleLogin = async () => {
+    setLoading(true);
     try {
       const res = await fetch(`${API}/api/login`, {
         method: "POST",
@@ -23,6 +25,7 @@ function Login() {
 
       if (!res.ok) {
         alert(data.error || "Invalid credentials");
+        setLoading(false);
         return;
       }
 
@@ -33,6 +36,8 @@ function Login() {
       console.error(err);
       alert("Backend server not reachable");
     }
+
+    setLoading(false);
   };
 
   return (
@@ -53,9 +58,10 @@ function Login() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button onClick={handleLogin}>Login</button>
+        <button onClick={handleLogin}>
+          {loading ? "Logging in..." : "Login"}
+        </button>
 
-        {/* 👇 ADD THIS */}
         <p style={{ marginTop: "10px" }}>
           New user?{" "}
           <span
@@ -65,7 +71,6 @@ function Login() {
             Sign Up here
           </span>
         </p>
-
       </div>
     </div>
   );

@@ -1,13 +1,11 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from backend.models import db, User
 from backend.voice_control import start_voice, stop_voice
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import send_from_directory
 import os
-# ---------------- DATABASE ----------------
 
-
+# ---------------- APP ----------------
 app = Flask(__name__)
 database_url = os.getenv("DATABASE_URL")
 
@@ -27,12 +25,11 @@ with app.app_context():
 
 CORS(app)
 
-
 @app.route("/")
 def home():
     return "Backend is running 🚀"
 
-# ---------------- MUSIC FOLDER ----------------
+# ---------------- MUSIC ----------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MUSIC_FOLDER = os.path.join(BASE_DIR, "music")
 os.makedirs(MUSIC_FOLDER, exist_ok=True)
@@ -49,7 +46,7 @@ class DummyPlayer:
         self.current_index = 0
         self.volume = 50
         self.status = "stopped"
-    
+
     def play(self):
         self.status = "playing"
 
@@ -72,13 +69,20 @@ class DummyPlayer:
 
 player = DummyPlayer(local_songs)
 
+# ---------------- LIKE / DISLIKE ----------------
+likes = {}
+dislikes = {}
+
+def current_song():
+    if player.songs:
+        return player.songs[player.current_index]
+    return None
+
 # ---------------- STATE ----------------
 voice_status = {"active": False}
 gesture_status = {"active": False}
 
 # ---------------- PLAYER CONTROLS ----------------
-
-
 @app.route("/api/play", methods=["POST"])
 def play():
     player.play()
@@ -109,15 +113,38 @@ def volume_down():
     player.volume_down()
     return jsonify({"volume": player.volume})
 
+# ---------------- LIKE / DISLIKE APIs ----------------
+@app.route("/api/like", methods=["POST"])
+def like_song():
+    song = current_song()
+    if not song:
+        return jsonify({"error": "No song playing"}), 400
+
+    likes[song] = likes.get(song, 0) + 1
+    return jsonify({"song": song, "likes": likes[song]})
+
+@app.route("/api/dislike", methods=["POST"])
+def dislike_song():
+    song = current_song()
+    if not song:
+        return jsonify({"error": "No song playing"}), 400
+
+    dislikes[song] = dislikes.get(song, 0) + 1
+    return jsonify({"song": song, "dislikes": dislikes[song]})
+
 # ---------------- STATE ROUTE ----------------
 @app.route("/api/state")
 def get_state():
+    song = current_song()
     return jsonify({
         "mode": "local",
         "status": player.status,
         "current_index": player.current_index,
         "voice": voice_status["active"],
-        "gesture": gesture_status["active"]
+        "gesture": gesture_status["active"],
+        "song": song,
+        "likes": likes.get(song, 0),
+        "dislikes": dislikes.get(song, 0)
     })
 
 # ---------------- SONG LIST ----------------
@@ -150,12 +177,11 @@ def play_index():
         "status": player.status,
         "current_index": player.current_index
     })
-# ---------------- AUTH ----------------
 
+# ---------------- AUTH ----------------
 @app.route("/api/signup", methods=["POST"])
 def signup():
     data = request.get_json()
-    print("Signup request data:", data)  # debug
 
     if User.query.filter(
         (User.email == data["email"]) |
@@ -171,7 +197,6 @@ def signup():
     )
     db.session.add(user)
     db.session.commit()
-    print("User created:", user.id)  # debug
 
     return jsonify({"message": "Signup successful"}), 201
 
@@ -191,18 +216,19 @@ def login():
         return jsonify({"error": "Invalid credentials"}), 401
 
     return jsonify({"message": "Login successful", "user_id": user.id})
+
 # ---------------- VOICE ----------------
 @app.route("/api/voice/start", methods=["POST"])
 def voice_start():
     start_voice()
     voice_status["active"] = True
-    return {"status": "voice started"}
+    return jsonify({"status": "voice started", "active": True})
 
 @app.route("/api/voice/stop", methods=["POST"])
 def voice_stop():
     stop_voice()
     voice_status["active"] = False
-    return {"status": "voice stopped"}
+    return jsonify({"status": "voice stopped", "active": False})
 
 @app.route("/api/voice_status")
 def voice_status_route():
@@ -212,12 +238,12 @@ def voice_status_route():
 @app.route("/api/gesture/start", methods=["POST"])
 def gesture_start():
     gesture_status["active"] = True
-    return {"status": "gesture started"}
+    return jsonify({"status": "gesture started", "active": True})
 
 @app.route("/api/gesture/stop", methods=["POST"])
 def gesture_stop():
     gesture_status["active"] = False
-    return {"status": "gesture stopped"}
+    return jsonify({"status": "gesture stopped", "active": False})
 
 @app.route("/api/gesture_status")
 def gesture_status_route():
@@ -227,4 +253,3 @@ def gesture_status_route():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-    
