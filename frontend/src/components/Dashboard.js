@@ -15,6 +15,7 @@ function Dashboard() {
   const [gestureOn, setGestureOn] = useState(false); // ⭐ NEW
 
   const navigate = useNavigate();
+  console.log("API URL:", API);
 
   // fetch songs
   useEffect(() => {
