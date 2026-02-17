@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from models import db, User
+from backend.models import db, User, Song
 from voice_control import start_voice, stop_voice
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
