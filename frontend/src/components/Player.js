@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 
 function Player({ songs = [] }) {
-  const API = process.env.REACT_APP_API_URL || "";
+  const API = process.env.REACT_APP_API_URL?.replace(/\/$/, "");
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const audioRef = useRef(null);
