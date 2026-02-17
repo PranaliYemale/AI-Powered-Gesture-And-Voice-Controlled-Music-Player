@@ -151,7 +151,7 @@ def play_index():
         "current_index": player.current_index
     })
 # ---------------- AUTH ----------------
-@app.route("/api/signup", methods=["POST"])
+
 @app.route("/api/signup", methods=["POST"])
 def signup():
     data = request.get_json()
