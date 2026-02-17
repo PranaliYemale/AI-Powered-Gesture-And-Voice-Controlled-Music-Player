@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from backend.models import db, User, Song
-from backend.voice_control import start_voice, stop_voice
+#from backend.voice_control import start_voice, stop_voice
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import os
@@ -221,7 +221,7 @@ def login():
     return jsonify({"message": "Login successful", "user_id": user.id})
 
 # ---------------- VOICE ----------------
-@app.route("/api/voice/start", methods=["POST"])
+"""@app.route("/api/voice/start", methods=["POST"])
 def voice_start():
     start_voice()
     voice_status["active"] = True
@@ -235,7 +235,7 @@ def voice_stop():
 
 @app.route("/api/voice_status")
 def voice_status_route():
-    return jsonify(voice_status)
+    return jsonify(voice_status)"""
 
 # ---------------- GESTURE ----------------
 @app.route("/api/gesture/start", methods=["POST"])
