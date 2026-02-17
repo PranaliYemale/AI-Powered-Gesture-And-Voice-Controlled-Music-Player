@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import VoiceStatus from "./VoiceStatus";
-import VoiceHelp from "./VoiceHelp";
 import GestureControl from "./GestureControl";
 import Player from "./Player";
+import VoiceControl from "./VoiceControl";
+
 
 function Dashboard() {
-  const API = process.env.REACT_APP_API_URL;
+  const API = process.env.REACT_APP_API_URL || "";
 
   const [mode, setMode] = useState("local");
   const [status, setStatus] = useState("Stopped");
@@ -77,7 +77,7 @@ function Dashboard() {
 
       <h1>🎧 Smart Music Player</h1>
 
-      <VoiceStatus />
+      
 
       <div className="glass">
         <b>Mode:</b> {mode.toUpperCase()}
@@ -125,6 +125,12 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* VOICE CONTROL */}
+      <div style={{ marginTop: 25 }}>
+        <h3>🎤 Voice Control</h3>
+        <VoiceControl />
+      </div>
+
       {/* PLAYER */}
       <div className="glass" style={{ marginTop: 15 }}>
         <Player songs={songs} />
@@ -147,7 +153,7 @@ function Dashboard() {
         </div>
       )}
 
-      <VoiceHelp />
+      
     </div>
   );
 }

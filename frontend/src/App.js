@@ -3,10 +3,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import Dashboard from "./components/Dashboard";
+import VoiceControl from "./components/VoiceControl";
 
 function App() {
 
-  const isLoggedIn = !!localStorage.getItem("token");
+  const isLoggedIn = !!localStorage.getItem("user_id");
 
   return (
     <BrowserRouter>
