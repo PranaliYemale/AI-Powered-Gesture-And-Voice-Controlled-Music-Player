@@ -26,7 +26,7 @@ function Login() {
         return;
       }
 
-      localStorage.setItem("token", data.user_id);
+      localStorage.setItem("user_id", data.user_id);
       navigate("/dashboard");
 
     } catch (err) {
