@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API from "../api";   // 👈 IMPORTANT
 
 function Login() {
   const [emailOrUsername, setEmailOrUsername] = useState("");
@@ -7,34 +8,21 @@ function Login() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const API = process.env.REACT_APP_API_URL;
 
   const handleLogin = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email_or_username: emailOrUsername,
-          password: password,
-        }),
+      const res = await API.post("/login", {
+        email_or_username: emailOrUsername,
+        password: password,
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || "Invalid credentials");
-        setLoading(false);
-        return;
-      }
-
-      localStorage.setItem("user_id", data.user_id);
+      localStorage.setItem("user_id", res.data.user_id);
       navigate("/dashboard");
 
     } catch (err) {
       console.error(err);
-      alert("Backend server not reachable");
+      alert(err.response?.data?.error || "Login failed");
     }
 
     setLoading(false);
