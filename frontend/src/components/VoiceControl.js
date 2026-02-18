@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+const API = process.env.REACT_APP_API_URL || "";
+
 const VoiceControl = () => {
   const [listening, setListening] = useState(false);
 
@@ -27,19 +29,19 @@ const VoiceControl = () => {
     console.log("Command:", command);
 
     if (command.includes("play")) {
-      fetch("/api/play", { method: "POST" });
+      fetch(`${API}/api/play`, { method: "POST" });
     }
 
     if (command.includes("pause")) {
-      fetch("/api/pause", { method: "POST" });
+      fetch(`${API}/api/pause`, { method: "POST" });
     }
 
     if (command.includes("next")) {
-      fetch("/api/next", { method: "POST" });
+      fetch(`${API}/api/next`, { method: "POST" });
     }
 
     if (command.includes("previous")) {
-      fetch("/api/prev", { method: "POST" });
+      fetch(`${API}/api/prev`, { method: "POST" });
     }
   };
 
