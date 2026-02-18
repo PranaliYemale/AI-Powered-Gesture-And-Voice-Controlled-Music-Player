@@ -70,7 +70,7 @@ class DummyPlayer:
     def volume_down(self):
         self.volume = max(0, self.volume - 10)
 
-player = DummyPlayer(local_songs)
+player = DummyPlayer([])
 
 # ---------------- LIKE / DISLIKE ----------------
 likes = {}
@@ -155,6 +155,7 @@ def get_state():
 def serve_music(filename):
     return send_from_directory(MUSIC_FOLDER, filename)
 
+
 @app.route("/api/songs")
 def get_songs():
     songs = []
@@ -163,12 +164,22 @@ def get_songs():
             f for f in os.listdir(MUSIC_FOLDER)
             if f.endswith(".mp3") or f.endswith(".wav")
         ]
+
+    player.songs = songs   # ⭐ IMPORTANT
+
     return jsonify({"songs": songs})
 
 @app.route("/api/play_index", methods=["POST"])
 def play_index():
     data = request.get_json()
     index = data.get("index", 0)
+
+    songs = [
+        f for f in os.listdir(MUSIC_FOLDER)
+        if f.endswith(".mp3") or f.endswith(".wav")
+    ]
+
+    player.songs = songs
 
     if index < 0 or index >= len(player.songs):
         return jsonify({"error": "Invalid index"}), 400
