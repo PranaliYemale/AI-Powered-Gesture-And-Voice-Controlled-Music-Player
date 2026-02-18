@@ -1,44 +1,36 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API from "../api"; // correct path apne project ke hisaab se
 
 function Signup() {
-
-  const API = process.env.REACT_APP_API_URL;
-
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleSignup = async () => {
+    setLoading(true);
     try {
-      const res = await fetch(`${API}/api/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
+      const res = await API.post("/signup", {
+        username,
+        email,
+        password,
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert("Signup failed: " + (data.error || "Unknown error"));
-        return;
-      }
-
-      alert("Signup successful! Please login.");
+      alert(res.data.message || "Signup successful!");
       navigate("/login");
-
     } catch (err) {
-      console.error("Error connecting to backend:", err);
-      alert("Backend server not reachable!");
+      console.error("Signup error:", err);
+      alert(err.response?.data?.error || "Signup failed!");
     }
+    setLoading(false);
   };
 
   return (
     <div className="auth-page">
       <div className="auth-box">
-
         <h2>Signup</h2>
 
         <input
@@ -63,7 +55,7 @@ function Signup() {
         />
 
         <p>
-          Already have an account?
+          Already have an account?{" "}
           <span
             style={{ color: "#6c63ff", cursor: "pointer" }}
             onClick={() => navigate("/login")}
@@ -72,8 +64,9 @@ function Signup() {
           </span>
         </p>
 
-        <button onClick={handleSignup}>Signup</button>
-
+        <button onClick={handleSignup}>
+          {loading ? "Signing up..." : "Signup"}
+        </button>
       </div>
     </div>
   );
