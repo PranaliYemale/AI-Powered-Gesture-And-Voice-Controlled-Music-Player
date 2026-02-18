@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from backend.models import db, User, Song
-#from backend.voice_control import start_voice, stop_voice
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import os
@@ -37,10 +36,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MUSIC_FOLDER = os.path.join(BASE_DIR, "music")
 os.makedirs(MUSIC_FOLDER, exist_ok=True)
 
-local_songs = [
-    f for f in os.listdir(MUSIC_FOLDER)
-    if f.endswith(".mp3") or f.endswith(".wav")
-]
+def get_song_list():
+    return [
+        f for f in os.listdir(MUSIC_FOLDER)
+        if f.endswith(".mp3") or f.endswith(".wav")
+    ]
 
 # ---------------- PLAYER ----------------
 class DummyPlayer:
@@ -155,18 +155,10 @@ def get_state():
 def serve_music(filename):
     return send_from_directory(MUSIC_FOLDER, filename)
 
-
 @app.route("/api/songs")
 def get_songs():
-    songs = []
-    if os.path.exists(MUSIC_FOLDER):
-        songs = [
-            f for f in os.listdir(MUSIC_FOLDER)
-            if f.endswith(".mp3") or f.endswith(".wav")
-        ]
-
-    player.songs = songs   # ⭐ IMPORTANT
-
+    songs = get_song_list()
+    player.songs = songs
     return jsonify({"songs": songs})
 
 @app.route("/api/play_index", methods=["POST"])
@@ -174,11 +166,7 @@ def play_index():
     data = request.get_json()
     index = data.get("index", 0)
 
-    songs = [
-        f for f in os.listdir(MUSIC_FOLDER)
-        if f.endswith(".mp3") or f.endswith(".wav")
-    ]
-
+    songs = get_song_list()
     player.songs = songs
 
     if index < 0 or index >= len(player.songs):
@@ -230,23 +218,6 @@ def login():
         return jsonify({"error": "Invalid credentials"}), 401
 
     return jsonify({"message": "Login successful", "user_id": user.id})
-
-# ---------------- VOICE ----------------
-"""@app.route("/api/voice/start", methods=["POST"])
-def voice_start():
-    start_voice()
-    voice_status["active"] = True
-    return jsonify({"status": "voice started", "active": True})
-
-@app.route("/api/voice/stop", methods=["POST"])
-def voice_stop():
-    stop_voice()
-    voice_status["active"] = False
-    return jsonify({"status": "voice stopped", "active": False})
-
-@app.route("/api/voice_status")
-def voice_status_route():
-    return jsonify(voice_status)"""
 
 # ---------------- GESTURE ----------------
 @app.route("/api/gesture/start", methods=["POST"])
