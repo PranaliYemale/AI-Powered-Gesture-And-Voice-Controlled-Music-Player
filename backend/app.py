@@ -237,4 +237,16 @@ def gesture_status_route():
 # ---------------- RUN ----------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
+
     app.run(host="0.0.0.0", port=port)
+
+
+# -------- SERVE FRONTEND BUILD --------
+FRONTEND_BUILD = os.path.join(BASE_DIR, "..", "frontend", "build")
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_react(path):
+    if path != "" and os.path.exists(os.path.join(FRONTEND_BUILD, path)):
+        return send_from_directory(FRONTEND_BUILD, path)
+    return send_from_directory(FRONTEND_BUILD, "index.html")
