@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../api"; // correct path apne project ke hisaab se
+
 
 function Signup() {
   const [username, setUsername] = useState("");
