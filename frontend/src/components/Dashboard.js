@@ -4,20 +4,20 @@ import GestureControl from "./GestureControl";
 import Player from "./Player";
 import VoiceControl from "./VoiceControl";
 
-
 function Dashboard() {
   const API = process.env.REACT_APP_API_URL || "";
 
   const [mode, setMode] = useState("local");
-  const [status, setStatus] = useState("Stopped");
+  const [status, setStatus] = useState("stopped");
   const [songs, setSongs] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [gestureOn, setGestureOn] = useState(false); // ⭐ NEW
+  const [gestureOn, setGestureOn] = useState(false);
 
   const navigate = useNavigate();
+
   console.log("API URL:", API);
 
-  // fetch songs
+  // Fetch songs
   useEffect(() => {
     if (mode === "local") {
       fetch(`${API}/api/songs`)
@@ -27,7 +27,7 @@ function Dashboard() {
     }
   }, [mode, API]);
 
-  // poll state (5 sec ⭐)
+  // Poll state every 5 sec
   useEffect(() => {
     const interval = setInterval(() => {
       fetch(`${API}/api/state`)
@@ -35,7 +35,7 @@ function Dashboard() {
         .then((data) => {
           if (data) {
             setCurrentIndex(data.current_index ?? 0);
-            setStatus(data.status ?? "Stopped");
+            setStatus(data.status ?? "stopped");
             setMode(data.mode ?? "local");
           }
         })
@@ -45,18 +45,41 @@ function Dashboard() {
     return () => clearInterval(interval);
   }, [API]);
 
-  const playSelectedSong = (index) => {
-    fetch(`${API}/api/play_index`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ index }),
-    });
+  // Play selected song
+  const playSelectedSong = async (index) => {
+    try {
+      const res = await fetch(`${API}/api/play_index`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ index }),
+      });
+      const data = await res.json();
+      if (data && !data.error) {
+        setCurrentIndex(data.current_index ?? index);
+        setStatus(data.status ?? "playing");
+      } else {
+        console.error("Play index error:", data.error);
+      }
+    } catch (err) {
+      console.error("Error playing song:", err);
+    }
   };
 
+  // Generic button for player actions
   const btn = (name, api, red = false) => (
     <button
       className={`btn ${red ? "btn-red" : ""}`}
-      onClick={() => fetch(`${API}${api}`, { method: "POST" })}
+      onClick={async () => {
+        try {
+          const res = await fetch(`${API}${api}`, { method: "POST" });
+          const data = await res.json();
+          if (api === "/api/play" || api === "/api/pause") {
+            setStatus(data.status ?? status);
+          }
+        } catch (err) {
+          console.error("Error:", err);
+        }
+      }}
     >
       {name}
     </button>
@@ -77,8 +100,6 @@ function Dashboard() {
 
       <h1>🎧 Smart Music Player</h1>
 
-      
-
       <div className="glass">
         <b>Mode:</b> {mode.toUpperCase()}
 
@@ -97,7 +118,7 @@ function Dashboard() {
           {btn("👎 Dislike", "/api/dislike")}
         </div>
 
-        {/* ⭐ GESTURE */}
+        {/* Gesture Control */}
         <div style={{ marginTop: 25 }}>
           <h3>🖐 Gesture Control</h3>
 
@@ -125,18 +146,18 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* VOICE CONTROL */}
+      {/* Voice Control */}
       <div style={{ marginTop: 25 }}>
         <h3>🎤 Voice Control</h3>
         <VoiceControl />
       </div>
 
-      {/* PLAYER */}
+      {/* Player */}
       <div className="glass" style={{ marginTop: 15 }}>
-        <Player songs={songs} />
+        <Player songs={songs} currentIndex={currentIndex} status={status} />
       </div>
 
-      {/* SONG LIST */}
+      {/* Local Song List */}
       {mode === "local" && (
         <div className="glass" style={{ marginTop: 15 }}>
           <h3>Local Songs</h3>
@@ -152,8 +173,6 @@ function Dashboard() {
           </select>
         </div>
       )}
-
-      
     </div>
   );
 }
