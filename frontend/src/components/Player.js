@@ -1,45 +1,39 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 function Player({ songs }) {
-  const API = process.env.REACT_APP_API_URL?.replace(/\/$/, "");
-  const audioRef = useRef(null);
+  const API = process.env.REACT_APP_API_URL || "";
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // sync with backend state
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetch(`${API}/api/state`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.current_index !== undefined) {
-            setCurrentIndex(data.current_index);
-          }
-        })
-        .catch(() => {});
-    }, 2000);
+    fetch(`${API}/api/state`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.current_index !== undefined) {
+          setCurrentIndex(data.current_index);
+        }
+      });
+  }, [songs, API]);
 
-    return () => clearInterval(interval);
-  }, [API]);
-
-  useEffect(() => {
-    if (audioRef.current && songs.length > 0) {
-      audioRef.current.load();
-      audioRef.current.play().catch(() => {});
-    }
-  }, [currentIndex, songs]);
-
-  if (songs.length === 0) return null;
+  if (!songs || songs.length === 0) {
+    return <div>No songs available</div>;
+  }
 
   return (
-    <div className="player">
-      <h3>Now Playing: {songs[currentIndex]}</h3>
+    <div>
+      <h3>🎵 Now Playing</h3>
 
       <audio
-        ref={audioRef}
-        src={`${API}/music/${songs[currentIndex]}`}
+        key={currentIndex}
         controls
+        autoPlay
+        style={{ width: "100%" }}
+        src={`${API}/music/${songs[currentIndex]}`}
       />
+
+      <div style={{ marginTop: 10 }}>
+        {songs[currentIndex]}
+      </div>
     </div>
   );
 }
