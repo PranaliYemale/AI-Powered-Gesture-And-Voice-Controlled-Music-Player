@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-
 function Login() {
+  const API = process.env.REACT_APP_API_URL;
+
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -11,18 +12,33 @@ function Login() {
 
   const handleLogin = async () => {
     setLoading(true);
+
     try {
-      const res = await API.post("/login", {
-        email_or_username: emailOrUsername,
-        password: password,
+      const res = await fetch(`${API}/api/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email_or_username: emailOrUsername,
+          password: password,
+        }),
       });
 
-      localStorage.setItem("user_id", res.data.user_id);
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Login failed");
+        setLoading(false);
+        return;
+      }
+
+      localStorage.setItem("user_id", data.user_id);
       navigate("/dashboard");
 
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.error || "Login failed");
+      alert("Backend not reachable");
     }
 
     setLoading(false);
