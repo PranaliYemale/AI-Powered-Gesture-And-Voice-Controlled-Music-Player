@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-
 function Signup() {
+  const API = process.env.REACT_APP_API_URL;
+
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,18 +14,28 @@ function Signup() {
   const handleSignup = async () => {
     setLoading(true);
     try {
-      const res = await API.post("/signup", {
-        username,
-        email,
-        password,
+      const res = await fetch(`${API}/api/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password }),
       });
 
-      alert(res.data.message || "Signup successful!");
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Signup failed");
+        setLoading(false);
+        return;
+      }
+
+      alert("Signup successful!");
       navigate("/login");
+
     } catch (err) {
       console.error("Signup error:", err);
-      alert(err.response?.data?.error || "Signup failed!");
+      alert("Backend not reachable");
     }
+
     setLoading(false);
   };
 
