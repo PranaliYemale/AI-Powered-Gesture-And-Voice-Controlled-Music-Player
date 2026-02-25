@@ -1,14 +1,15 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from backend.models import db, User, Song
+from backend.models import db, User
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
-# ---------------- APP ----------------
 app = Flask(__name__)
+
+# ---------------- DATABASE ----------------
 database_url = os.getenv("DATABASE_URL")
 
 if not database_url:
@@ -27,10 +28,6 @@ with app.app_context():
 
 CORS(app)
 
-@app.route("/")
-def home():
-    return "Backend is running 🚀"
-
 # ---------------- MUSIC ----------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MUSIC_FOLDER = os.path.join(BASE_DIR, "music")
@@ -44,11 +41,11 @@ def get_song_list():
 
 # ---------------- PLAYER ----------------
 class DummyPlayer:
-    def __init__(self, songs=None):
-        self.songs = songs or []
+    def __init__(self):
+        self.songs = []
         self.current_index = 0
-        self.volume = 50
         self.status = "stopped"
+        self.volume = 50
 
     def play(self):
         self.status = "playing"
@@ -64,26 +61,7 @@ class DummyPlayer:
         if self.songs:
             self.current_index = (self.current_index - 1) % len(self.songs)
 
-    def volume_up(self):
-        self.volume = min(100, self.volume + 10)
-
-    def volume_down(self):
-        self.volume = max(0, self.volume - 10)
-
-player = DummyPlayer([])
-
-# ---------------- LIKE / DISLIKE ----------------
-likes = {}
-dislikes = {}
-
-def current_song():
-    if player.songs:
-        return player.songs[player.current_index]
-    return None
-
-# ---------------- STATE ----------------
-voice_status = {"active": False}
-gesture_status = {"active": False}
+player = DummyPlayer()
 
 # ---------------- PLAYER CONTROLS ----------------
 @app.route("/api/play", methods=["POST"])
@@ -106,48 +84,14 @@ def prev_song():
     player.prev_song()
     return jsonify({"current_index": player.current_index})
 
-@app.route("/api/volume_up", methods=["POST"])
-def volume_up():
-    player.volume_up()
-    return jsonify({"volume": player.volume})
-
-@app.route("/api/volume_down", methods=["POST"])
-def volume_down():
-    player.volume_down()
-    return jsonify({"volume": player.volume})
-
-# ---------------- LIKE / DISLIKE APIs ----------------
-@app.route("/api/like", methods=["POST"])
-def like_song():
-    song = current_song()
-    if not song:
-        return jsonify({"error": "No song playing"}), 400
-
-    likes[song] = likes.get(song, 0) + 1
-    return jsonify({"song": song, "likes": likes[song]})
-
-@app.route("/api/dislike", methods=["POST"])
-def dislike_song():
-    song = current_song()
-    if not song:
-        return jsonify({"error": "No song playing"}), 400
-
-    dislikes[song] = dislikes.get(song, 0) + 1
-    return jsonify({"song": song, "dislikes": dislikes[song]})
-
-# ---------------- STATE ROUTE ----------------
+# ---------------- STATE ----------------
 @app.route("/api/state")
 def get_state():
-    song = current_song()
     return jsonify({
         "mode": "local",
         "status": player.status,
         "current_index": player.current_index,
-        "voice": voice_status["active"],
-        "gesture": gesture_status["active"],
-        "song": song,
-        "likes": likes.get(song, 0),
-        "dislikes": dislikes.get(song, 0)
+        "song": player.songs[player.current_index] if player.songs else None
     })
 
 # ---------------- SONG LIST ----------------
@@ -219,34 +163,7 @@ def login():
 
     return jsonify({"message": "Login successful", "user_id": user.id})
 
-# ---------------- GESTURE ----------------
-@app.route("/api/gesture/start", methods=["POST"])
-def gesture_start():
-    gesture_status["active"] = True
-    return jsonify({"status": "gesture started", "active": True})
-
-@app.route("/api/gesture/stop", methods=["POST"])
-def gesture_stop():
-    gesture_status["active"] = False
-    return jsonify({"status": "gesture stopped", "active": False})
-
-@app.route("/api/gesture_status")
-def gesture_status_route():
-    return jsonify(gesture_status)
-
 # ---------------- RUN ----------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-
     app.run(host="0.0.0.0", port=port)
-
-
-# -------- SERVE FRONTEND BUILD --------
-FRONTEND_BUILD = os.path.join(BASE_DIR, "..", "frontend", "build")
-
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def serve_react(path):
-    if path != "" and os.path.exists(os.path.join(FRONTEND_BUILD, path)):
-        return send_from_directory(FRONTEND_BUILD, path)
-    return send_from_directory(FRONTEND_BUILD, "index.html")
