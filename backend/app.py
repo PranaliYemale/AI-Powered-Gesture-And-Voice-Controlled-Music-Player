@@ -236,6 +236,9 @@ def login():
         return jsonify({"error": "Invalid credentials"}), 401
     
     return jsonify({"message": "Login successful", "user_id": user.id})
+@app.route("/")
+def home():
+    return "Backend is running successfully!"
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
