@@ -9,7 +9,7 @@ function Dashboard() {
 
   const [mode, setMode] = useState("local");
   const [status, setStatus] = useState("stopped");
-  const [songs, setSongs] = useState([]);
+  const [songs, setSongs] = useState([]); // always array
   const [currentIndex, setCurrentIndex] = useState(0);
   const [gestureOn, setGestureOn] = useState(false);
 
@@ -17,13 +17,25 @@ function Dashboard() {
 
   console.log("API URL:", API);
 
-  // Fetch songs
+  // ✅ Fetch songs safely
   useEffect(() => {
     if (mode === "local") {
       fetch(`${API}/api/songs`)
         .then((res) => res.json())
-        .then((data) => setSongs(data))
-        .catch((err) => console.error("Songs fetch error:", err));
+        .then((data) => {
+          console.log("Songs API response:", data);
+
+          // 🔥 IMPORTANT FIX
+          if (Array.isArray(data)) {
+            setSongs(data);
+          } else {
+            setSongs([]);
+          }
+        })
+        .catch((err) => {
+          console.error("Songs fetch error:", err);
+          setSongs([]);
+        });
     }
   }, [mode, API]);
 
@@ -45,7 +57,6 @@ function Dashboard() {
     return () => clearInterval(interval);
   }, [API]);
 
-  // Play selected song
   const playSelectedSong = async (index) => {
     try {
       const res = await fetch(`${API}/api/play_index`, {
@@ -53,7 +64,9 @@ function Dashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ index }),
       });
+
       const data = await res.json();
+
       if (data && !data.error) {
         setCurrentIndex(data.current_index ?? index);
         setStatus(data.status ?? "playing");
@@ -65,7 +78,6 @@ function Dashboard() {
     }
   };
 
-  // Generic button for player actions
   const btn = (name, api, red = false) => (
     <button
       className={`btn ${red ? "btn-red" : ""}`}
@@ -73,6 +85,7 @@ function Dashboard() {
         try {
           const res = await fetch(`${API}${api}`, { method: "POST" });
           const data = await res.json();
+
           if (api === "/api/play" || api === "/api/pause") {
             setStatus(data.status ?? status);
           }
@@ -112,44 +125,7 @@ function Dashboard() {
           {btn("⏸ Pause", "/api/pause")}
           {btn("⏭ Next", "/api/next")}
           {btn("⏮ Prev", "/api/prev")}
-          {btn("🔊 Vol+", "/api/volume_up")}
-          {btn("🔉 Vol-", "/api/volume_down")}
-          {btn("👍 Like", "/api/like")}
-          {btn("👎 Dislike", "/api/dislike")}
         </div>
-
-        {/* Gesture Control */}
-        <div style={{ marginTop: 25 }}>
-          <h3>🖐 Gesture Control</h3>
-
-          <button
-            className="btn"
-            onClick={() => {
-              fetch(`${API}/api/gesture/start`, { method: "POST" });
-              setGestureOn(true);
-            }}
-          >
-            Start Gesture
-          </button>
-
-          <button
-            className="btn btn-red"
-            onClick={() => {
-              fetch(`${API}/api/gesture/stop`, { method: "POST" });
-              setGestureOn(false);
-            }}
-          >
-            Stop Gesture
-          </button>
-
-          {gestureOn && <GestureControl />}
-        </div>
-      </div>
-
-      {/* Voice Control */}
-      <div style={{ marginTop: 25 }}>
-        <h3>🎤 Voice Control</h3>
-        <VoiceControl />
       </div>
 
       {/* Player */}
@@ -161,16 +137,24 @@ function Dashboard() {
       {mode === "local" && (
         <div className="glass" style={{ marginTop: 15 }}>
           <h3>Local Songs</h3>
-          <select
-            value={currentIndex}
-            onChange={(e) => playSelectedSong(Number(e.target.value))}
-          >
-            {songs.map((s, i) => (
-              <option key={i} value={i}>
-              {i === currentIndex ? "▶ " : ""} {s.name}
-              </option>
-            ))}
-          </select>
+
+          {/* 🔥 SAFE MAP FIX */}
+          {Array.isArray(songs) && songs.length > 0 ? (
+            <select
+              value={currentIndex}
+              onChange={(e) =>
+                playSelectedSong(Number(e.target.value))
+              }
+            >
+              {songs.map((s, i) => (
+                <option key={i} value={i}>
+                  {i === currentIndex ? "▶ " : ""} {s.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p>No songs available</p>
+          )}
         </div>
       )}
     </div>
