@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from backend.models import db, User
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -35,16 +35,37 @@ def home():
     return "Backend is running successfully!"
 
 # ---------------- MUSIC ----------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MUSIC_FOLDER = os.path.join(BASE_DIR, "music")
-os.makedirs(MUSIC_FOLDER, exist_ok=True)
+songs= [
+  {
+    "name":"Zatpat patapat",
+    "url":"https://res.cloudinary.com/dwm6vxarh/video/upload/v1772188857/Zat_Pat_Pata_Pat_nwmtfk.mp3"
+  },
+  {
+    "name":"Ucha lamba kad",
+    "url":"https://res.cloudinary.com/dwm6vxarh/video/upload/v1772188846/Uncha_Lamba_Kad_bkeas5.mp3"
+  },
+  {
+    "name":"Sitarre",
+    "url":"https://res.cloudinary.com/dwm6vxarh/video/upload/v1772188827/Sitaare_ffeo3z.mp3"
+  },
+  {
+    "name":"Saibo re",
+    "url":"https://res.cloudinary.com/dwm6vxarh/video/upload/v1772188790/Saibo_Re_wdvvn9.mp3"
+  },
+  {
+    "name":"Nadiyon par",
+    "url":"https://res.cloudinary.com/dwm6vxarh/video/upload/v1772188750/Nadiyon_Paar_Roohi_hfqfwr.mp3"
+  },
+  {
+    "name":"Cruel summer",
+    "url":"https://res.cloudinary.com/dwm6vxarh/video/upload/v1772188655/Cruel_Summer_coku12.mp3"
+  },
+]
 
-def get_song_list():
-    return [
-        f for f in os.listdir(MUSIC_FOLDER)
-        if f.endswith(".mp3") or f.endswith(".wav")
-    ]
-
+@app.route("/api/songs")
+def get_songs():
+    player.songs = songs
+    return jsonify(songs)
 # ---------------- PLAYER ----------------
 class DummyPlayer:
     def __init__(self):
@@ -97,26 +118,16 @@ def get_state():
         "mode": "local",
         "status": player.status,
         "current_index": player.current_index,
-        "song": player.songs[player.current_index] if player.songs and player.current_index < len(player.songs) else None
+        "song": player.songs[player.current_index] if player.songs else None
     })
 
 # ---------------- SONG LIST ----------------
-@app.route("/music/<filename>")
-def serve_music(filename):
-    return send_from_directory(MUSIC_FOLDER, filename)
 
-@app.route("/api/songs")
-def get_songs():
-    songs = get_song_list()
-    player.songs = songs
-    return jsonify({"songs": songs})
 
 @app.route("/api/play_index", methods=["POST"])
 def play_index():
     data = request.get_json()
     index = data.get("index", 0)
-
-    songs = get_song_list()
     player.songs = songs
 
     if index < 0 or index >= len(player.songs):

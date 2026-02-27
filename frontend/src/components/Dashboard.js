@@ -22,7 +22,7 @@ function Dashboard() {
     if (mode === "local") {
       fetch(`${API}/api/songs`)
         .then((res) => res.json())
-        .then((data) => setSongs(data.songs || []))
+        .then((data) => setSongs(data))
         .catch((err) => console.error("Songs fetch error:", err));
     }
   }, [mode, API]);
@@ -167,7 +167,7 @@ function Dashboard() {
           >
             {songs.map((s, i) => (
               <option key={i} value={i}>
-                {i === currentIndex ? "▶ " : ""} {s}
+              {i === currentIndex ? "▶ " : ""} {s.name}
               </option>
             ))}
           </select>

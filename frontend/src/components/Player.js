@@ -22,6 +22,8 @@ function Player({ songs }) {
     return <div>No songs available</div>;
   }
 
+  const currentSong = songs[currentIndex];
+
   return (
     <div>
       <h3>🎵 Now Playing</h3>
@@ -31,11 +33,11 @@ function Player({ songs }) {
         controls
         autoPlay
         style={{ width: "100%" }}
-        src={`${API}/music/${songs[currentIndex]}`}
+        src={currentSong?.url}   // ✅ FIXED
       />
 
       <div style={{ marginTop: 10 }}>
-        {songs[currentIndex]}
+        {currentSong?.name}      // ✅ FIXED
       </div>
     </div>
   );
