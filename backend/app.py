@@ -25,7 +25,13 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-CORS(app)
+
+CORS(app, origins=[
+    "http://localhost:3000",           # Local dev
+    "https://your-vercel-frontend.vercel.app",  # Production
+    "*" 
+])
+
 
 # ---------------- MUSIC ----------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -172,19 +178,52 @@ def upload_music():
     })
 
 # ---------------- AUTH ---------------- (same)
+# app.py में db functions के ऊपर ये add करें
+@app.before_request
+def before_request():
+    try:
+        db.session.rollback()  # PendingRollbackError fix
+    except:
+        pass
+
+# Signup function को ये बनाएं (error handling के साथ)
 @app.route("/api/signup", methods=["POST"])
 def signup():
-    data = request.get_json()
-    if User.query.filter(
-        (User.email == data["email"]) | (User.username == data["username"])
-    ).first():
-        return jsonify({"error": "User already exists"}), 400
-    
-    hashed_password = generate_password_hash(data["password"])
-    user = User(username=data["username"], email=data["email"], password=hashed_password)
-    db.session.add(user)
-    db.session.commit()
-    return jsonify({"message": "Signup successful"}), 201
+    try:
+        db.session.rollback()  # Clean session
+        
+        data = request.get_json()
+        print(f"SIGNUP DATA: {data}")  # Debug log
+        
+        if not data or not all(k in data for k in ['username', 'email', 'password']):
+            return jsonify({"error": "Missing fields"}), 400
+
+        # Check existing user
+        existing = User.query.filter(
+            (User.email == data["email"]) | (User.username == data["username"])
+        ).first()
+        
+        if existing:
+            return jsonify({"error": "User already exists"}), 400
+
+        hashed_password = generate_password_hash(data["password"])
+        user = User(
+            username=data["username"][:50],  # Length limit
+            email=data["email"][:120],
+            password=hashed_password
+        )
+        
+        db.session.add(user)
+        db.session.commit()
+        print("SIGNUP SUCCESS")  # Debug log
+        
+        return jsonify({"message": "Signup successful"}), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"SIGNUP ERROR: {str(e)}")  # Render logs में दिखेगा
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/api/login", methods=["POST"])
 def login():
